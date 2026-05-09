@@ -1,168 +1,226 @@
-# Vektor Ecosystem
+# Vektor — Distributed Emergency Intelligence System
 
-Vektor is an emergency response ecosystem made up of two cooperating codebases:
+> A fault-tolerant emergency response system designed to operate even under low or no connectivity.
 
-- `Vektor-app`, the native Android client that handles local profile storage, sensor-driven emergency detection, on-device AI inference, and the user experience.
-- `Vektor-core`, the VectorGo agent engine that receives emergency payloads, normalizes and classifies them, selects hospitals, computes routing, persists events, and publishes realtime updates.
+![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20IoT%20%7C%20Web-blue)
+![Backend](https://img.shields.io/badge/Backend-Node.js%20%7C%20Serverless-green)
+![Database](https://img.shields.io/badge/Database-PostgreSQL-yellow)
+![AI](https://img.shields.io/badge/AI-Gemini%20%7C%20On--device-purple)
+![Realtime](https://img.shields.io/badge/Realtime-Firebase%20%7C%20PubSub-orange)
+![Deployment](https://img.shields.io/badge/Deployment-Vercel-black)
+![License](https://img.shields.io/badge/License-MIT-lightgrey)
 
-The repository also includes a prebuilt Android artifact, `app-release.apk`, so the mobile client can be installed and tested without rebuilding immediately.
+---
 
-## System Overview
+## Demo Video
 
-The design is intentionally split between a local-first mobile layer and a deterministic backend orchestration layer.
+[![Watch Demo](https://img.youtube.com/vi/jEDcW9UTcHg/maxresdefault.jpg)](https://www.youtube.com/shorts/jEDcW9UTcHg)
 
-1. The Android app keeps private data on device, monitors sensors, and runs local AI with Cactus and Gemma for offline emergency analysis.
-2. When an incident must be escalated, the app sends a single emergency payload to the VectorGo endpoint.
-3. The backend validates the request, runs the decision pipeline, picks a hospital, calculates routing, and stores the result.
-4. Realtime incident state is mirrored for operational screens and follow-up workflows.
+Click to watch a short demo including detection, alerting, and response flow.
 
-The current documentation in this workspace describes two important persistence paths on the backend: PostgreSQL for audit storage and Firebase Realtime Database for operational realtime state.
+---
 
-## Repository Layout
+## Overview
 
-| Path | Purpose |
-|---|---|
-| `Vektor-app/` | Android application source, product requirements, and embedded Cactus SDK materials |
-| `Vektor-app/prd.md` | Product requirements for the mobile app |
-| `Vektor-app/cactus.md` | High-level Cactus integration reference |
-| `Vektor-app/cactus/` | Cactus SDK sources, docs, and platform wrappers |
-| `Vektor-core/` | VectorGo backend and operational docs |
-| `Vektor-core/prd.md` | Product requirements for the backend decision engine |
-| `Vektor-core/README.md` | Backend usage, API surface, and runtime notes |
-| `app-release.apk` | Prebuilt Android APK artifact kept at the repository root |
+Vektor is a distributed emergency intelligence ecosystem composed of two cooperating systems:
 
-## Vektor-App
+- **Vektor-app** → Android client (edge intelligence, detection, user interaction)  
+- **Vektor-core** → Backend decision engine (classification, routing, coordination)
 
-`Vektor-app` is a native Android project written in Kotlin. The product document defines it as an emergency identity card, health companion, and silent guardian that is meant to keep working even when the device is offline.
+The system is designed to eliminate delays caused by fragmented communication and unreliable connectivity by enabling **local-first detection and intelligent centralized coordination**.
 
-### Core responsibilities
+---
 
-- Store profile data locally using encrypted on-device storage.
-- Monitor motion, location, and sensor conditions for emergency detection.
-- Run on-device inference through Cactus SDK and Gemma.
-- Build and queue emergency payloads for retry-safe delivery.
-- Present the user experience in Jetpack Compose.
+## Problem
 
-### Architecture notes from the PRD
+Traditional emergency systems suffer from:
 
-The mobile PRD describes the app as a layered system:
+- Manual reporting delays  
+- Lack of coordination across systems  
+- Dependency on stable internet  
+- No fallback mechanisms  
 
-- Data layer for encrypted preferences, Room, and internal file storage.
-- Sensor layer for accelerometer, gyroscope, barometer, and location monitoring.
-- AI layer backed by Cactus SDK.
-- Emergency layer for countdown, payload creation, and retry logic.
-- Communication layer for the VectorGo client and SMS fallback.
-- UI layer built with Jetpack Compose.
+This results in slower response times and increased risk.
 
-### Cactus integration
+---
 
-The app depends on Cactus for local AI. The Cactus documentation in `Vektor-app/cactus/` explains the engine, graph API, platform wrappers, and SDK-specific quickstarts. Useful entry points include:
+## Solution
 
-- `Vektor-app/cactus/README.md`
-- `Vektor-app/cactus/docs/quickstart.md`
-- `Vektor-app/cactus/docs/cactus_engine.md`
-- `Vektor-app/cactus/docs/cactus_graph.md`
-- `Vektor-app/cactus/android/README.md`
-- `Vektor-app/cactus/flutter/README.md`
-- `Vektor-app/cactus/python/README.md`
-- `Vektor-app/cactus/rust/README.md`
+Vektor introduces a **hybrid architecture**:
 
-The app-level overview in `Vektor-app/cactus.md` and `Vektor-app/prd.md` makes the intended contract clear: Cactus handles the offline brain, while VectorGo is the external orchestration surface.
+- Local detection and processing on device  
+- Deterministic backend decision engine  
+- Multi-channel communication with fallback  
+- Real-time synchronization across systems  
 
-## Vektor-Core
+---
 
-`Vektor-core` is the VectorGo agent engine. The backend PRD frames it as a real-time decision system that processes emergency signals, classifies severity, selects hospitals, orchestrates response, and syncs offline decisions when connectivity returns.
+## System Architecture
 
-### Core responsibilities
+### Vektor-app (Mobile Layer)
 
-- Accept emergency payloads from the app or other sources.
-- Normalize and validate incoming data.
-- Classify severity using deterministic logic with cloud fallbacks where configured.
-- Select the best hospital and route using live or fallback data.
-- Persist emergency events and emit realtime updates.
-- Compare offline and online decisions during sync.
+A native Android application acting as a **local-first emergency system**.
 
-### Documented endpoints
+**Responsibilities:**
+- Store medical and identity data securely on-device  
+- Monitor sensors (accelerometer, GPS, microphone)  
+- Run on-device AI (Cactus + Gemma)  
+- Detect emergencies offline  
+- Generate and queue emergency payloads  
+- Provide UI via Jetpack Compose  
 
-The backend README describes the primary API surface:
+---
 
-- `GET /health` for liveness.
-- `GET /api/ping` for uptime monitoring.
-- `GET /ready` for readiness checks.
-- `POST /api/emergency` for the main emergency intake path.
-- `POST /api/offline-sync` for reconciling an offline decision with the online result.
-- `GET /api/incidents/:incidentId` and `POST /api/incidents/:incidentId/discharge` for incident workflows.
+### Vektor-core (Backend Engine)
 
-### Runtime behavior
+A deterministic agent engine responsible for **decision-making and coordination**.
 
-The backend documentation emphasizes a few important constraints:
+**Responsibilities:**
+- Accept emergency payloads  
+- Validate and normalize input  
+- Classify severity  
+- Select hospitals and compute routing  
+- Persist events (PostgreSQL)  
+- Publish realtime updates (Firebase / PubSub)  
+- Sync offline and online decisions  
 
-- Intake should be deterministic and never fail on routine validation paths.
-- Classification and routing should fall back to rules when external services are not configured.
-- Idempotency is used to make retry-safe writes practical.
-- The total response budget is designed to stay under the emergency latency target.
+---
 
-## Getting Started
+## System Flow
 
-The workspace is split into two independently runnable projects. The exact commands may vary by local toolchain, but the documented defaults are below.
+1. Emergency detected via mobile sensors or IoT  
+2. On-device AI evaluates situation  
+3. Payload sent to backend (if available)  
+4. Backend classifies and plans response  
+5. Alerts dispatched via:
+   - API / Realtime  
+   - GSM / SMS fallback  
+6. System synchronizes when connectivity returns  
+
+---
+
+## Key Capabilities
+
+- Works without internet  
+- No single point of failure  
+- Edge + cloud intelligence  
+- Identity-aware emergency handling  
+- Real-time synchronization  
+
+---
+
+## Architecture Diagram
+
+![Architecture](./Media/Architecture%20diagram.jpeg)
+
+---
+
+## Process Flow
+
+![Flow](./Media/Process%20flow%20diagram.jpeg)
+
+---
+
+## System Preview
+
+### Mobile Application
+![App](./Media/Android%20app.jpg)
+
+### Emergency Alert
+![Alert](./Media/Auto%20alert%20sent%20from%20the%20iot%20device%20whatsapp%20ss.jpg)
+
+### IoT Device
+![IoT](./Media/IoT-Raspberry%20pi%20with%20sensors%20conected%20to%20a%20screen.jpg)
+
+### QR Medical Profile
+![QR](./Media/Qr%20profile.jpg)
+
+---
+
+## Tech Stack
+
+| Layer            | Technology |
+|-----------------|-----------|
+| Mobile          | Android (Jetpack Compose) |
+| AI (Edge)       | Cactus SDK, Gemma |
+| Backend         | Node.js (VectorGo Engine) |
+| Database        | PostgreSQL |
+| Realtime        | Firebase / PubSub |
+| Communication   | GSM / SMS fallback |
+| Hosting         | Vercel |
+
+---
+
+## API Endpoints (Vektor-core)
+
+| Endpoint | Description |
+|---------|------------|
+| GET /health | Health check |
+| GET /ready | Readiness check |
+| POST /api/emergency | Emergency intake |
+| POST /api/offline-sync | Sync offline decisions |
+| GET /api/incidents/:id | Fetch incident |
+| POST /api/incidents/:id/discharge | Close incident |
+
+---
+
+## Quick Start
 
 ### Backend
 
 ```bash
 cd Vektor-core
 npm install
-copy .env.example .env
+cp .env.example .env
 npm run dev
 ```
 
-Run tests with:
+Run tests:
 
 ```bash
-cd Vektor-core
 npm test
-```
-
-### Android app
-
-Open `Vektor-app` in Android Studio, or use the Gradle wrapper from that project root.
-
-Typical Android build flow:
-
-```bash
+Mobile App
 cd Vektor-app
 ./gradlew assembleDebug
 ```
+Or open in Android Studio and run.
 
-The repository root also contains `app-release.apk` for immediate installation and smoke testing.
+Prebuilt APK
 
-## Build and Packaging Notes
+The repository includes: app-release.apk
 
-The Android tree includes the main app project plus a Cactus SDK subtree. If you are rebuilding the SDK bindings or native components, the supporting scripts and build files live under `Vektor-app/cactus/` and `Vektor-app/`.
+You can install it directly for testing without building.
 
-Important files to know about:
+---
 
-- `Vektor-app/build.gradle.kts`
-- `Vektor-app/app/build.gradle.kts`
-- `Vektor-app/build_cactus_android.sh`
-- `Vektor-app/cactus/android/build.sh`
-- `Vektor-app/cactus/android/CMakeLists.txt`
-- `Vektor-core/package.json`
-- `Vektor-core/src/`
 
-## Documentation Map
+### Project Structure
+- ├────vektor-core-hms/
+- ├── Vektor-app/          
+- ├── Vektor-core/         
+- ├── Media/               
+- ├── app-release.apk      
+- └── README.md
 
-If you want to understand the system before changing code, start with these docs in order:
+---
+### Impact
 
-1. `Vektor-app/prd.md` for the mobile product definition and architecture.
-2. `Vektor-core/prd.md` for the backend agent engine requirements.
-3. `Vektor-core/README.md` for the current backend API and runtime behavior.
-4. `Vektor-app/cactus/README.md` for the Cactus SDK overview and benchmarks.
-5. `Vektor-app/cactus/docs/quickstart.md` for platform-specific SDK entry points.
-6. `Vektor-app/cactus/docs/cactus_engine.md` and `Vektor-app/cactus/docs/cactus_graph.md` for the native engine APIs.
+Vektor transforms emergency systems from:
 
-## Notes For Contributors
+Fragmented + delayed → Coordinated + intelligent + fault-tolerant
 
-- Keep mobile-first behavior in `Vektor-app` aligned with the PRD, especially the local-first and emergency-only networking expectations.
-- Keep the backend deterministic where possible, especially around intake, validation, and routing fallbacks.
-- Do not remove `app-release.apk` unless the distribution strategy changes.
-- Avoid adding new external dependencies without documenting why they are needed and where they fit in the architecture.
+It ensures:
+
+- Immediate detection
+- Faster response
+- Reliability under network failure
+- Future Work
+- Improved edge AI performance
+- Advanced hospital routing
+- Wearable integrations
+- Large-scale deployment
+
+--- 
+### License
+
+MIT License
