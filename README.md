@@ -16,18 +16,13 @@
 
 [![Watch Demo](https://img.youtube.com/vi/jEDcW9UTcHg/maxresdefault.jpg)](https://www.youtube.com/shorts/jEDcW9UTcHg)
 
-Click to watch a short demo including detection, alerting, and response flow.
+> Click to watch a short demo of the system including detection, alerting, and response flow.
 
 ---
 
 ## Overview
 
-Vektor is a distributed emergency intelligence ecosystem composed of two cooperating systems:
-
-- **Vektor-app** → Android client (edge intelligence, detection, user interaction)  
-- **Vektor-core** → Backend decision engine (classification, routing, coordination)
-
-The system is designed to eliminate delays caused by fragmented communication and unreliable connectivity by enabling **local-first detection and intelligent centralized coordination**.
+Vektor is a distributed emergency intelligence ecosystem composed of cooperating systems, designed to eliminate fragmented communication and delayed response in critical situations. It connects mobile devices, IoT systems, and a central decision engine into a unified, real-time response network that operates reliably even under low or no connectivity.
 
 ---
 
@@ -35,10 +30,10 @@ The system is designed to eliminate delays caused by fragmented communication an
 
 Traditional emergency systems suffer from:
 
-- Manual reporting delays  
-- Lack of coordination across systems  
-- Dependency on stable internet  
-- No fallback mechanisms  
+- Manual reporting delays
+- Isolated systems with no coordination
+- Dependency on stable internet
+- Lack of real-time synchronization
 
 This results in slower response times and increased risk.
 
@@ -46,77 +41,96 @@ This results in slower response times and increased risk.
 
 ## Solution
 
-Vektor introduces a **hybrid architecture**:
+Vektor introduces a **hybrid architecture** enabling:
 
-- Local detection and processing on device  
-- Deterministic backend decision engine  
-- Multi-channel communication with fallback  
-- Real-time synchronization across systems  
+- Instant detection from multiple sources
+- Local decision-making at the edge
+- Centralized intelligent coordination
+- Reliable communication through fallback channels
+
+---
+
+## Core Approach
+
+### Multi-Origin Detection
+Incidents can be detected through:
+- Mobile sensors (accelerometer, GPS, microphone)
+- Voice triggers
+- IoT devices
+
+### Edge Intelligence
+- On-device AI processing (Cactus SDK + Gemma)
+- Immediate response without internet
+- Reduced latency
+
+### Central Decision Engine
+- Event classification via deterministic agent engine
+- Response planning and hospital routing
+- Coordination across responders
+
+### Multi-Channel Communication
+- Real-time APIs and Pub/Sub synchronization
+- GSM/SMS fallback for reliability
 
 ---
 
 ## System Architecture
 
 ### Vektor-app (Mobile Layer)
-
 A native Android application acting as a **local-first emergency system**.
 
 **Responsibilities:**
-- Store medical and identity data securely on-device  
-- Monitor sensors (accelerometer, GPS, microphone)  
-- Run on-device AI (Cactus + Gemma)  
-- Detect emergencies offline  
-- Generate and queue emergency payloads  
-- Provide UI via Jetpack Compose  
-
----
+- Store medical and identity data securely on-device
+- Monitor sensors (accelerometer, GPS, microphone)
+- Run on-device AI for offline emergency detection
+- Generate and queue emergency payloads
+- Provide UI via Jetpack Compose
 
 ### Vektor-core (Backend Engine)
-
 A deterministic agent engine responsible for **decision-making and coordination**.
 
 **Responsibilities:**
-- Accept emergency payloads  
-- Validate and normalize input  
-- Classify severity  
-- Select hospitals and compute routing  
-- Persist events (PostgreSQL)  
-- Publish realtime updates (Firebase / PubSub)  
-- Sync offline and online decisions  
+- Accept emergency payloads and validate input
+- Classify severity using AI
+- Select hospitals and compute routing
+- Persist events (PostgreSQL)
+- Publish realtime updates (Firebase / PubSub)
+- Sync offline and online decisions
 
 ---
 
 ## System Flow
 
-1. Emergency detected via mobile sensors or IoT  
-2. On-device AI evaluates situation  
-3. Payload sent to backend (if available)  
-4. Backend classifies and plans response  
-5. Alerts dispatched via:
-   - API / Realtime  
-   - GSM / SMS fallback  
-6. System synchronizes when connectivity returns  
+1. Incident is detected at any node (mobile or IoT)
+2. Edge device processes data locally and attempts connection to central agent
+3. If online:
+   - Event is sent to central decision engine
+   - Payload is classified and response is coordinated
+   - Alerts are dispatched via Realtime APIs / PubSub
+4. If offline:
+   - Alert is sent via GSM/SMS fallback
+5. When connectivity returns:
+   - Data is synchronized across all nodes
+   - System updates decisions in real-time
 
 ---
 
 ## Key Capabilities
 
-- Works without internet  
-- No single point of failure  
-- Edge + cloud intelligence  
-- Identity-aware emergency handling  
-- Real-time synchronization  
+- Works without internet (No single point of failure)
+- Edge + cloud intelligence
+- Immediate response initiation
+- Identity-aware emergency handling
+- Cross-device real-time synchronization
 
 ---
 
-## Architecture Diagram
+## Architecture & Process Diagrams
 
+### Architecture Overview
 ![Architecture](./Media/Architecture%20diagram.jpeg)
 
----
-
-## Process Flow
-
+### Process Flow
 ![Flow](./Media/Process%20flow%20diagram.jpeg)
 
 ---
@@ -142,9 +156,11 @@ A deterministic agent engine responsible for **decision-making and coordination*
 | Layer            | Technology |
 |-----------------|-----------|
 | Mobile          | Android (Jetpack Compose) |
+| IoT             | Raspberry Pi |
 | AI (Edge)       | Cactus SDK, Gemma |
-| Backend         | Node.js (VectorGo Engine) |
-| Database        | PostgreSQL |
+| AI (Cloud)      | Gemini API |
+| Backend         | Node.js / Serverless |
+| Database        | PostgreSQL (Neon) |
 | Realtime        | Firebase / PubSub |
 | Communication   | GSM / SMS fallback |
 | Hosting         | Vercel |
@@ -166,61 +182,94 @@ A deterministic agent engine responsible for **decision-making and coordination*
 
 ## Quick Start
 
-### Backend
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/Pulkit-10-0/vektor-ecosystem.git
+cd vektor-ecosystem
+```
+
+### 2. Backend Setup
 
 ```bash
 cd Vektor-core
 npm install
+
+# Configure Environment
 cp .env.example .env
+# Ensure DATABASE_URL and GEMINI_API_KEY are set in your .env
+
+# Run the Backend
 npm run dev
+
+# Run Tests
+npm test
 ```
 
-Run tests:
+### 3. Mobile App (Android) Setup
 
 ```bash
-npm test
-Mobile App
 cd Vektor-app
 ./gradlew assembleDebug
 ```
-Or open in Android Studio and run.
+*Alternatively, open the `Vektor-app` folder in Android Studio and run it on an emulator or physical device.*
 
-Prebuilt APK
+**Prebuilt APK:**
+The repository includes an `app-release.apk`. You can install it directly for testing without building.
 
-The repository includes: app-release.apk
+### 4. Connect IoT Device (Optional)
+- Setup Raspberry Pi with required firmware
+- Connect sensors (accelerometer / microphone / GPS)
+- Enable communication with backend
 
-You can install it directly for testing without building.
+### 5. Trigger an Emergency Event
+You can simulate an event using:
+- Mobile sensor trigger
+- Manual alert
+- IoT device input
+
+### 6. Observe System Behavior
+- Real-time alerts via API / PubSub
+- SMS fallback when offline
+- Data synchronization after reconnection
 
 ---
 
+## Project Structure
 
-### Project Structure
-- ├────vektor-core-hms/
-- ├── Vektor-app/          
-- ├── Vektor-core/         
-- ├── Media/               
-- ├── app-release.apk      
-- └── README.md
+```
+vektor-ecosystem/
+├── Vektor-app/              # Android application (Jetpack Compose)
+├── Vektor-core/             # Core decision engine (Node.js)
+├── vektor-core-hms/         # Serverless / AI routing implementation
+├── Media/                   # Images, diagrams, demo assets
+├── app-release.apk          # Prebuilt Android APK
+└── README.md
+```
 
 ---
-### Impact
+
+## Impact
 
 Vektor transforms emergency systems from:
-
-Fragmented + delayed → Coordinated + intelligent + fault-tolerant
+**Fragmented + delayed → Coordinated + intelligent + fault-tolerant**
 
 It ensures:
-
-- Immediate detection
-- Faster response
+- Immediate information flow and detection
+- Faster response initiation
 - Reliability under network failure
-- Future Work
-- Improved edge AI performance
-- Advanced hospital routing
-- Wearable integrations
-- Large-scale deployment
 
---- 
-### License
+---
+
+## Future Work
+
+- Improved edge AI models for faster inference
+- Advanced routing intelligence (hospital selection, dispatch optimization)
+- Wearable device integration
+- Large-scale deployment and public infrastructure integration
+
+---
+
+## License
 
 MIT License
